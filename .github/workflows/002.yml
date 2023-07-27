@@ -1,17 +1,28 @@
-name: testing
+name: Release
+
 on:
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-  workflow_dispatch:
+    tags:
+    - 'v*'
 
 jobs:
-  example-job:
+
+  release:
+    name: Release
     runs-on: ubuntu-latest
     steps:
-      - name: Retrieve secret
-        env:
-          super_secret: ${{ secrets.SUPERSECRET }}
-        run: |
-          echo "${{ super_secret }}"
+    
+    - name: Get version
+      id: get_version
+      #run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+      run: echo  "VERSION=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+
+    - name: Create Release
+      uses: actions/create-release@v3
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.get_version.outputs.VERSION }}
+        release_name: ${{ steps.get_version.outputs.VERSION }}
+        draft: false
+        prerelease: false
